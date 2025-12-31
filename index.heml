@@ -1,0 +1,1182 @@
+
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <title>Sing Your SIP Song — SIP Wave</title>
+  <style>
+    :root{
+      --bg:#0b1220;
+      --panel:rgba(255,255,255,.06);
+      --panel2:rgba(255,255,255,.04);
+      --border:rgba(255,255,255,.10);
+      --text:#e8eefc;
+      --muted:rgba(232,238,252,.75);
+      --ok:#22c55e;
+      --warn:#f59e0b;
+
+      --voice:#22c55e;               /* user voice line */
+      --proj:rgba(232,238,252,.55);  /* projection line */
+      --accent:#07877b;
+      --kara:rgba(7,135,123,.22);
+    }
+    *{ box-sizing:border-box; }
+    body{
+      margin:0;
+      font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      background:
+        radial-gradient(900px 520px at 20% 0%, rgba(7,135,123,.18), transparent 60%),
+        radial-gradient(900px 520px at 80% 20%, rgba(255,255,255,.07), transparent 60%),
+        var(--bg);
+      color:var(--text);
+    }
+    .wrap{ max-width: 980px; margin: 0 auto; padding: 18px 14px 22px; }
+    h1{ margin: 4px 0 6px; font-size: 22px; letter-spacing: .2px; }
+    .sub{ margin: 0 0 12px; color: var(--muted); font-size: 13px; line-height: 1.35; }
+
+    .topRow{ display:flex; gap:10px; flex-wrap:wrap; align-items:center; margin: 10px 0 12px; }
+    .status{
+      flex: 1 1 220px;
+      display:flex; align-items:center; gap:8px;
+      padding:10px 12px;
+      border:1px solid var(--border);
+      border-radius: 14px;
+      background: var(--panel2);
+      color: var(--muted);
+      min-width: 220px;
+    }
+    .dot{ width:10px; height:10px; border-radius:99px; background:rgba(255,255,255,.25); }
+    .dot.ok{ background: var(--ok); }
+    .dot.warn{ background: var(--warn); }
+    .pulse{ animation:pulse 1.1s ease-in-out infinite; }
+    @keyframes pulse{ 0%{opacity:.55} 50%{opacity:1} 100%{opacity:.55} }
+
+    .pill{
+      display:inline-flex; align-items:center; gap:6px;
+      padding: 7px 10px;
+      border-radius: 999px;
+      border: 1px solid var(--border);
+      background: var(--panel2);
+      color: var(--muted);
+      font-size: 12px;
+      white-space: nowrap;
+    }
+
+    .grid{
+      display:grid;
+      grid-template-columns: 1fr;
+      gap: 12px;
+    }
+    @media (min-width: 860px){
+      .grid{ grid-template-columns: 1.2fr .8fr; align-items:start; }
+    }
+
+    .card{
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      padding: 12px;
+    }
+
+    .hero{ padding: 14px; }
+
+    /* Karaoke panel */
+    .karaoke{
+      border: 1px solid var(--border);
+      background: rgba(255,255,255,.03);
+      border-radius: 18px;
+      padding: 12px;
+      margin: 12px 0 10px;
+    }
+    .karaTop{
+      display:flex; flex-wrap:wrap; align-items:center; gap:10px;
+      justify-content: space-between;
+      margin-bottom: 8px;
+    }
+    .select{
+      display:flex; gap:8px; align-items:center; flex-wrap:wrap;
+      color: var(--muted);
+      font-size: 12px;
+    }
+    select{
+      padding: 10px 12px;
+      border-radius: 14px;
+      border: 1px solid var(--border);
+      background: rgba(255,255,255,.03);
+      color: var(--text);
+      outline:none;
+    }
+    .karaLine{
+      position: relative;
+      font-size: 18px;
+      font-weight: 900;
+      line-height: 1.2;
+      padding: 12px 12px;
+      border-radius: 16px;
+      background: rgba(7,135,123,.10);
+      overflow:hidden;
+    }
+    .karaLine.small{ font-size: 16px; font-weight: 800; opacity: .92; background: rgba(255,255,255,.03); }
+    .karaFill{
+      position:absolute; inset:0;
+      width:0%;
+      background: linear-gradient(90deg, rgba(34,197,94,.20), rgba(7,135,123,.18));
+      pointer-events:none;
+    }
+    .karaText{
+      position: relative;
+      z-index: 2;
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      align-items:baseline;
+    }
+    .karaWord{
+      padding: 2px 0;
+      border-bottom: 3px solid transparent;
+    }
+    .karaWord.active{
+      border-bottom-color: rgba(34,197,94,.85);
+      color: #ffffff;
+    }
+    .karaWord.done{
+      color: rgba(232,238,252,.95);
+    }
+    .karaHint{
+      margin-top: 10px;
+      color: var(--muted);
+      font-size: 12px;
+      line-height:1.35;
+    }
+
+    .holdBtn{
+      width: 100%;
+      padding: 16px 14px;
+      border-radius: 16px;
+      border: 1px solid rgba(7,135,123,.45);
+      background: linear-gradient(180deg, rgba(7,135,123,.20), rgba(7,135,123,.06));
+      color: var(--text);
+      font-weight: 900;
+      font-size: 16px;
+      letter-spacing: .2px;
+      cursor: pointer;
+      user-select: none;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .holdBtn:active{ transform: translateY(1px); }
+    .row2{ display:flex; gap:10px; margin-top: 10px; flex-wrap: wrap; align-items:center; }
+    .btn{
+      flex: 1 1 130px;
+      padding: 12px 12px;
+      border-radius: 14px;
+      border: 1px solid var(--border);
+      background: rgba(255,255,255,.04);
+      color: var(--text);
+      cursor: pointer;
+    }
+    .btn.primary{
+      border-color: rgba(7,135,123,.45);
+      background: rgba(7,135,123,.10);
+      font-weight: 800;
+    }
+    .btn[disabled]{ opacity:.55; cursor:not-allowed; }
+
+    .field{ display:flex; gap: 10px; align-items:flex-end; flex-wrap: wrap; margin-top: 10px; }
+    .field label{ display:block; font-size: 12px; color: var(--muted); margin-bottom: 6px; }
+    input{
+      width: 100%;
+      padding: 12px 12px;
+      border-radius: 14px;
+      border: 1px solid var(--border);
+      background: rgba(255,255,255,.03);
+      color: var(--text);
+      outline:none;
+      font-size: 15px;
+    }
+    .col{ flex: 1 1 160px; min-width: 160px; }
+
+    canvas{
+      width: 100%;
+      height: 340px;
+      border-radius: 18px;
+      background: #070c16;
+      border: 1px solid var(--border);
+      display:block;
+    }
+    @media (max-width: 420px){ canvas{ height: 300px; } }
+
+    .kpis{
+      display:grid;
+      grid-template-columns: 1fr;
+      gap: 10px;
+      margin-top: 12px;
+    }
+    @media (min-width: 520px){
+      .kpis{ grid-template-columns: 1fr 1fr; }
+    }
+    .kpi{
+      border-radius: 16px;
+      border: 1px solid var(--border);
+      background: rgba(255,255,255,.04);
+      padding: 12px;
+    }
+    .kpi .t{ font-size: 12px; color: var(--muted); }
+    .kpi .v{ font-size: 20px; font-weight: 900; margin-top: 4px; }
+
+    .mini{ color: var(--muted); font-size: 12px; line-height: 1.35; margin-top: 10px; }
+
+    /* Leaderboard */
+    .board{ margin-top: 10px; border-top: 1px solid var(--border); padding-top: 10px; }
+    .boardTitle{
+      display:flex; justify-content:space-between; align-items:center;
+      gap: 10px;
+      color: var(--muted);
+      font-size: 12px;
+      margin-bottom: 8px;
+    }
+    .list{
+      display:flex;
+      flex-direction: column;
+      gap: 8px;
+      max-height: 290px;
+      overflow:auto;
+      padding-right: 6px;
+    }
+    .item{
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      gap: 10px;
+      padding: 10px 10px;
+      border-radius: 14px;
+      border: 1px solid var(--border);
+      background: rgba(255,255,255,.03);
+      color: var(--muted);
+      font-size: 13px;
+    }
+    .badge{
+      padding: 4px 10px;
+      border-radius: 999px;
+      border: 1px solid var(--border);
+      background: rgba(255,255,255,.04);
+      color: var(--text);
+      font-weight: 900;
+      font-size: 12px;
+      white-space:nowrap;
+    }
+    .score{
+      color: var(--text);
+      font-weight: 900;
+      white-space: nowrap;
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>Sing Your SIP Song 🎤</h1>
+    <p class="sub">
+      Choose a language, then <b>hold</b> and sing/chant the lyrics. The wave draws while you sing and stops when you stop.
+      After you stop, we generate a 60-month illustration:
+      <b style="color:var(--voice)">green</b> = your voice, <b style="color:var(--proj)">grey</b> = projection.
+      <span class="mini">Illustrative simulation (not investment advice).</span>
+    </p>
+
+    <div class="topRow">
+      <div class="status" id="status">
+        <span class="dot" id="statusDot"></span>
+        <span id="statusText">Ready. Tap Start Mic, then hold to sing.</span>
+      </div>
+      <span class="pill" id="monthPill">Month 0 / 60</span>
+      <span class="pill" id="scorePill">Score: —</span>
+      <span class="pill" id="modePill">Mode: Karaoke</span>
+    </div>
+
+    <div class="grid">
+      <!-- LEFT -->
+      <div class="card hero">
+        <div class="karaoke">
+          <div class="karaTop">
+            <div class="select">
+              <span>Language</span>
+              <select id="lang">
+                <option value="en">English</option>
+                <option value="ml">Malayalam (demo)</option>
+                <option value="ta">Tamil (demo)</option>
+                <option value="hi">Hindi (demo)</option>
+              </select>
+              <span class="pill" id="chorusPill">Chorus</span>
+            </div>
+            <span class="pill" id="linePill">Line 1 / 2</span>
+          </div>
+
+          <div class="karaLine" id="karaLine1">
+            <div class="karaFill" id="karaFill1"></div>
+            <div class="karaText" id="karaText1"></div>
+          </div>
+
+          <div style="height:10px"></div>
+
+          <div class="karaLine small" id="karaLine2">
+            <div class="karaFill" id="karaFill2"></div>
+            <div class="karaText" id="karaText2"></div>
+          </div>
+
+          <div class="karaHint">
+            Tip: You don’t need to be perfect. Just sing/chant in one stretch.
+            Louder voice → bigger ups/downs. Longer singing → more months drawn.
+          </div>
+        </div>
+
+        <button class="holdBtn" id="holdBtn" disabled>Hold & sing the chorus</button>
+
+        <div class="row2">
+          <button class="btn primary" id="btnMic">Start Mic</button>
+          <button class="btn" id="btnStop" disabled>Stop Mic</button>
+          <button class="btn" id="btnReset" disabled>Reset</button>
+          <button class="btn primary" id="btnShare" disabled>Share / Download</button>
+        </div>
+
+        <div class="field">
+          <div class="col">
+            <label>Monthly SIP (₹)</label>
+            <input id="sip" type="number" value="5000" min="500" step="500" />
+          </div>
+          <div class="col">
+            <label>Loudness</label>
+            <input id="loud" type="text" value="0.000" readonly />
+          </div>
+        </div>
+
+        <div style="height:12px"></div>
+
+        <canvas id="c" width="980" height="340"></canvas>
+
+        <div class="kpis">
+          <div class="kpi">
+            <div class="t">Invested (60 months)</div>
+            <div class="v" id="inv">₹0</div>
+          </div>
+          <div class="kpi">
+            <div class="t">Estimated Value (illustrative)</div>
+            <div class="v" id="val">₹—</div>
+          </div>
+          <div class="kpi">
+            <div class="t">Gain</div>
+            <div class="v" id="gain">₹—</div>
+          </div>
+          <div class="kpi">
+            <div class="t">Message</div>
+            <div class="v" style="font-size:13px; font-weight:800; line-height:1.35; color:var(--muted)">
+              Volatility is normal. Consistency is the edge.<br/>
+              Choose funds that match your goal and risk comfort.
+            </div>
+          </div>
+        </div>
+
+        <div class="mini">
+          How score works: steadier voice = higher “Consistency Score” + small bonus for longer singing.
+        </div>
+      </div>
+
+      <!-- RIGHT -->
+      <div class="card">
+        <div class="boardTitle">
+          <span>Local Leaderboard (this device)</span>
+          <button class="btn" id="btnClear" style="padding:10px 12px; flex:0 0 auto;">Clear</button>
+        </div>
+
+        <div class="list" id="lbList"></div>
+
+        <div class="mini" style="margin-top:10px">
+          For events, we can upgrade this to an Event Code leaderboard (server) so everyone competes together.
+        </div>
+      </div>
+    </div>
+  </div>
+
+<script>
+(() => {
+  // ---------------- CONFIG ----------------
+  const TOTAL_MONTHS = 60;
+
+  // Auto-stop on silence (while holding)
+  const SPEECH_ON  = 0.020;
+  const SPEECH_OFF = 0.014;
+  const STOP_AFTER_MS = 650;
+
+  // 1 sec singing == 1 month (cap 60)
+  const MS_PER_MONTH = 1000;
+
+  // Return model (live)
+  const LIVE_BASE_VOL = 0.010;
+  const LIVE_LOUD_K   = 0.08;
+  const LIVE_DRIFT    = 0.004;
+
+  // Projection model (calmer)
+  const PROJ_DRIFT = 0.004;
+  const PROJ_VOL   = 0.010;
+
+  // Karaoke timing: progress highlight across 2 lines as user sings
+  const TOTAL_LINES = 2;
+
+  // Leaderboard
+  const LB_KEY = "sip_karaoke_lb_v1";
+  const LB_MAX = 10;
+
+  // ---------------- LYRICS (demo placeholders; replace with your final copy) ----------------
+  // Keep short chorus to reduce embarrassment and boost participation.
+  const LYRICS = {
+    en: [
+      "Right SIP, right SIP, stay on track",
+      "Up and down, we don’t look back"
+    ],
+    ml: [
+      "റൈറ്റ് എസ് ഐ പി, റൈറ്റ് എസ് ഐ പി, മുന്നോട്ട്",
+      "മുകളിലും താഴെയും, തുടരുമെൻ യാത്ര"
+    ],
+    ta: [
+      "ரைட் எஸ் ஐ பி, ரைட் எஸ் ஐ பி, முன்னே",
+      "மேலும் கீழும், தொடர்வோம் நாமே"
+    ],
+    hi: [
+      "राइट SIP, राइट SIP, चलते रहो",
+      "ऊपर नीचे, फिर भी जुड़े रहो"
+    ]
+  };
+
+  // ---------------- DOM ----------------
+  const canvas = document.getElementById("c");
+  const ctx = canvas.getContext("2d");
+
+  const btnMic = document.getElementById("btnMic");
+  const btnStop = document.getElementById("btnStop");
+  const btnReset = document.getElementById("btnReset");
+  const btnShare = document.getElementById("btnShare");
+  const holdBtn = document.getElementById("holdBtn");
+
+  const statusDot = document.getElementById("statusDot");
+  const statusText = document.getElementById("statusText");
+  const monthPill = document.getElementById("monthPill");
+  const scorePill = document.getElementById("scorePill");
+  const modePill = document.getElementById("modePill");
+
+  const sipEl = document.getElementById("sip");
+  const loudEl = document.getElementById("loud");
+
+  const invEl = document.getElementById("inv");
+  const valEl = document.getElementById("val");
+  const gainEl = document.getElementById("gain");
+
+  const lbList = document.getElementById("lbList");
+  const btnClear = document.getElementById("btnClear");
+
+  const langSel = document.getElementById("lang");
+  const chorusPill = document.getElementById("chorusPill");
+  const linePill = document.getElementById("linePill");
+
+  const karaFill1 = document.getElementById("karaFill1");
+  const karaFill2 = document.getElementById("karaFill2");
+  const karaText1 = document.getElementById("karaText1");
+  const karaText2 = document.getElementById("karaText2");
+
+  // ---------------- AUDIO ----------------
+  let audioCtx, analyser, source, stream;
+  let rafId = null;
+  let loudSmoothed = 0;
+
+  // VAD state
+  let isSpeaking = false;
+  let silenceMs = 0;
+  let lastFrameTs = performance.now();
+
+  // Interaction state
+  let micReady = false;
+  let holding = false;
+  let stopped = false;
+  let elapsedSpeakMs = 0;
+  let monthIndex = 0;
+
+  // Scoring stats
+  let speakingSamples = 0;
+  let loudMean = 0;
+  let loudM2 = 0;
+
+  // Karaoke progress
+  let karaokeProgress = 0; // 0..1
+  let activeLine = 1;
+
+  // Returns/curves
+  const userReturns = new Array(TOTAL_MONTHS).fill(null);
+  const projReturns = new Array(TOTAL_MONTHS).fill(null);
+  const curveUser = new Array(TOTAL_MONTHS).fill(null);
+  const curveFull = new Array(TOTAL_MONTHS).fill(null);
+
+  // ---------------- HELPERS ----------------
+  const fmtINR = (n) => "₹" + Math.round(n).toLocaleString("en-IN");
+  const clamp = (x,a,b)=>Math.max(a,Math.min(b,x));
+
+  function randn(){
+    let u=0,v=0;
+    while(u===0) u=Math.random();
+    while(v===0) v=Math.random();
+    return Math.sqrt(-2*Math.log(u))*Math.cos(2*Math.PI*v);
+  }
+
+  function setStatus(type, text, pulsing=false){
+    statusDot.className = "dot" + (type ? (" " + type) : "");
+    statusText.textContent = text;
+    statusText.classList.toggle("pulse", !!pulsing);
+  }
+
+  function getCss(varName, fallback){
+    const v = getComputedStyle(document.documentElement).getPropertyValue(varName).trim();
+    return v || fallback;
+  }
+
+  function resetAll(){
+    loudSmoothed = 0;
+    isSpeaking = false;
+    silenceMs = 0;
+    lastFrameTs = performance.now();
+
+    holding = false;
+    stopped = false;
+    elapsedSpeakMs = 0;
+    monthIndex = 0;
+
+    speakingSamples = 0;
+    loudMean = 0;
+    loudM2 = 0;
+
+    karaokeProgress = 0;
+    activeLine = 1;
+    updateKaraokeUI();
+
+    for(let i=0;i<TOTAL_MONTHS;i++){
+      userReturns[i]=null;
+      projReturns[i]=null;
+      curveUser[i]=null;
+      curveFull[i]=null;
+    }
+
+    monthPill.textContent = `Month 0 / ${TOTAL_MONTHS}`;
+    scorePill.textContent = "Score: —";
+    btnShare.disabled = true;
+    btnReset.disabled = !micReady;
+
+    updateNumbers();
+    draw();
+  }
+
+  function updateNumbers(){
+    const sip = Math.max(500, +sipEl.value || 5000);
+    const invested = sip * TOTAL_MONTHS;
+    invEl.textContent = fmtINR(invested);
+
+    if(!stopped){
+      valEl.textContent = "₹—";
+      gainEl.textContent = "₹—";
+      return;
+    }
+    const value = sipValueFromReturns(sip);
+    valEl.textContent = fmtINR(value);
+    gainEl.textContent = fmtINR(value - invested);
+  }
+
+  function buildCurvesUser(){
+    if(monthIndex===0) return;
+    curveUser[0]=1;
+    for(let i=1;i<TOTAL_MONTHS;i++){
+      if(i<monthIndex){
+        const r = userReturns[i] ?? 0;
+        curveUser[i] = clamp(curveUser[i-1]*(1+r), 0.4, 4.0);
+      } else {
+        curveUser[i]=null;
+      }
+    }
+  }
+
+  function buildCurvesFull(){
+    if(monthIndex===0) return;
+    curveFull[0]=1;
+    for(let i=1;i<TOTAL_MONTHS;i++){
+      const r = (i<monthIndex) ? (userReturns[i] ?? 0) : (projReturns[i] ?? 0);
+      curveFull[i] = clamp(curveFull[i-1]*(1+r), 0.4, 4.0);
+    }
+  }
+
+  function generateProjection(){
+    for(let i=monthIndex;i<TOTAL_MONTHS;i++){
+      projReturns[i] = clamp(PROJ_DRIFT + randn()*PROJ_VOL, -0.06, 0.08);
+    }
+    buildCurvesFull();
+  }
+
+  function sipValueFromReturns(monthlySIP){
+    let corpus = 0;
+    for(let i=0;i<TOTAL_MONTHS;i++){
+      const r = (i<monthIndex) ? (userReturns[i] ?? 0) : (projReturns[i] ?? 0);
+      corpus = corpus*(1+r) + monthlySIP;
+    }
+    return corpus;
+  }
+
+  function generateNextMonth(loud){
+    if(monthIndex>=TOTAL_MONTHS) return;
+    const vol = clamp(LIVE_BASE_VOL + LIVE_LOUD_K*loud, 0.008, 0.085);
+    const r = clamp(LIVE_DRIFT + randn()*vol, -0.10, 0.12);
+    userReturns[monthIndex] = r;
+    monthIndex++;
+    monthPill.textContent = `Month ${monthIndex} / ${TOTAL_MONTHS}`;
+    buildCurvesUser();
+  }
+
+  // --- score (steadier loudness == higher)
+  function scoreFromStats(){
+    const variance = speakingSamples > 1 ? (loudM2 / (speakingSamples - 1)) : 0;
+    const std = Math.sqrt(variance);
+
+    // stability 0..1 (smaller std => higher)
+    const stability = clamp(1 - (std / 0.030), 0, 1);
+    const durationBonus = clamp(monthIndex / 60, 0, 1);
+
+    // final score 0..100
+    const score = Math.round((stability*85) + (durationBonus*15));
+    return { score, stability, std, months: monthIndex };
+  }
+
+  // ---------------- KARAOKE ----------------
+  function wordsFromLine(line){
+    // split by spaces; keep simple
+    return line.split(/\s+/).filter(Boolean);
+  }
+
+  function renderKaraoke(lang){
+    const lines = LYRICS[lang] || LYRICS.en;
+    const w1 = wordsFromLine(lines[0]);
+    const w2 = wordsFromLine(lines[1]);
+
+    karaText1.innerHTML = w1.map(w => `<span class="karaWord">${escapeHtml(w)}</span>`).join(" ");
+    karaText2.innerHTML = w2.map(w => `<span class="karaWord">${escapeHtml(w)}</span>`).join(" ");
+
+    karaokeProgress = 0;
+    activeLine = 1;
+    updateKaraokeUI();
+  }
+
+  function escapeHtml(s){
+    return String(s).replace(/[&<>"']/g, m => ({
+      "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"
+    }[m]));
+  }
+
+  function updateKaraokeUI(){
+    // progress 0..1 maps across 2 lines:
+    // 0..0.5 = line1, 0.5..1 = line2
+    const p = clamp(karaokeProgress, 0, 1);
+    const p1 = clamp(p*2, 0, 1);
+    const p2 = clamp((p-0.5)*2, 0, 1);
+
+    karaFill1.style.width = `${Math.round(p1*100)}%`;
+    karaFill2.style.width = `${Math.round(p2*100)}%`;
+
+    // word highlighting (approx by fraction of words)
+    const line1Words = [...karaText1.querySelectorAll(".karaWord")];
+    const line2Words = [...karaText2.querySelectorAll(".karaWord")];
+
+    const idx1 = Math.floor(p1 * Math.max(1, line1Words.length));
+    const idx2 = Math.floor(p2 * Math.max(1, line2Words.length));
+
+    line1Words.forEach((el, i) => {
+      el.classList.toggle("done", i < idx1);
+      el.classList.toggle("active", i === idx1 && p1 < 1);
+    });
+    line2Words.forEach((el, i) => {
+      el.classList.toggle("done", p > 0.5 && i < idx2);
+      el.classList.toggle("active", p > 0.5 && i === idx2 && p2 < 1);
+    });
+
+    if(p < 0.5){
+      activeLine = 1;
+      linePill.textContent = "Line 1 / 2";
+    } else {
+      activeLine = 2;
+      linePill.textContent = "Line 2 / 2";
+    }
+  }
+
+  // Karaoke progress is driven by how many months have been created so far.
+  // So longer singing advances the highlight naturally.
+  function syncKaraokeToMonths(){
+    karaokeProgress = clamp(monthIndex / TOTAL_MONTHS, 0, 1);
+    updateKaraokeUI();
+  }
+
+  // ---------------- DRAW ----------------
+  function drawGrid(){
+    ctx.globalAlpha = 0.20;
+    ctx.strokeStyle = "#ffffff";
+    ctx.lineWidth = 1;
+    for(let x=0;x<=canvas.width;x+=98){
+      ctx.beginPath(); ctx.moveTo(x,0); ctx.lineTo(x,canvas.height); ctx.stroke();
+    }
+    for(let y=0;y<=canvas.height;y+=68){
+      ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(canvas.width,y); ctx.stroke();
+    }
+    ctx.globalAlpha = 1;
+  }
+
+  function mapXY(i, arr, minV, maxV){
+    const pad=26, W=canvas.width, H=canvas.height;
+    const t=i/(TOTAL_MONTHS-1);
+    const x=pad + t*(W-pad*2);
+    const span=(maxV-minV)||1;
+    const yNorm=(arr[i]-minV)/span;
+    const y=(H-pad) - yNorm*(H-pad*2);
+    return [x,y];
+  }
+
+  function drawFooter(){
+    const pad=26, W=canvas.width, H=canvas.height;
+
+    ctx.globalAlpha = 0.95;
+    ctx.fillStyle = "#e8eefc";
+    ctx.font = "12px Arial";
+    ctx.fillText("Sing Your SIP Song — 60-month illustration", pad, pad - 8);
+
+    if(stopped && monthIndex>0){
+      // green line legend
+      ctx.fillStyle = getCss("--voice", "#22c55e");
+      ctx.fillRect(pad, H - pad + 10, 18, 3);
+      ctx.fillStyle = "#e8eefc";
+      ctx.fillText("Your voice", pad + 26, H - pad + 14);
+
+      // dashed projection legend
+      ctx.save();
+      ctx.setLineDash([6,6]);
+      ctx.strokeStyle = getCss("--proj", "rgba(232,238,252,.55)");
+      ctx.lineWidth = 2.2;
+      ctx.beginPath();
+      ctx.moveTo(pad + 120, H - pad + 12);
+      ctx.lineTo(pad + 160, H - pad + 12);
+      ctx.stroke();
+      ctx.restore();
+
+      ctx.fillStyle = "#e8eefc";
+      ctx.fillText("Projection", pad + 170, H - pad + 14);
+    }
+
+    ctx.globalAlpha = 0.85;
+    ctx.fillStyle = "#e8eefc";
+    ctx.font = "12px Arial";
+    const hint = !micReady ? "Tap Start Mic"
+      : stopped ? "Result ready — share it"
+      : holding ? "Singing… (release to stop)"
+      : "Hold button to sing";
+    ctx.fillText(hint, pad, H - pad + 36);
+    ctx.globalAlpha = 1;
+  }
+
+  function drawFinalNoteInCanvas(){
+    if(!stopped) return;
+    const pad=26, W=canvas.width, H=canvas.height;
+    const boxW = W - pad*2;
+    const boxH = 58;
+    const bx = pad;
+    const by = H - pad - boxH - 10;
+
+    ctx.globalAlpha = 0.70;
+    ctx.fillStyle = "rgba(255,255,255,.06)";
+    ctx.fillRect(bx, by, boxW, boxH);
+    ctx.globalAlpha = 1;
+
+    ctx.fillStyle = "rgba(232,238,252,.85)";
+    ctx.font = "12px Arial";
+    ctx.fillText("Volatility is normal. Consistency is the edge.", bx + 12, by + 20);
+    ctx.fillText("Choose funds that match your goal and risk comfort.", bx + 12, by + 38);
+
+    ctx.globalAlpha = 0.75;
+    ctx.fillText("Illustrative simulation (not investment advice).", bx + 12, by + 54);
+    ctx.globalAlpha = 1;
+  }
+
+  function draw(){
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+    drawGrid();
+
+    if(monthIndex===0){
+      drawFooter();
+      return;
+    }
+
+    // scaling
+    let minV=0.95, maxV=1.05;
+    if(!stopped){
+      const vals = curveUser.slice(0,monthIndex).filter(v=>v!=null);
+      minV = Math.min(...vals);
+      maxV = Math.max(...vals);
+    } else {
+      const vals = curveFull.filter(v=>v!=null);
+      minV = Math.min(...vals);
+      maxV = Math.max(...vals);
+    }
+    const padSpan=(maxV-minV)||0.1;
+    minV -= padSpan*0.10; maxV += padSpan*0.10;
+
+    // user (green)
+    ctx.lineWidth = 3.5;
+    ctx.strokeStyle = getCss("--voice", "#22c55e");
+    ctx.beginPath();
+    for(let i=0;i<monthIndex;i++){
+      if(curveUser[i]==null) continue;
+      const [x,y] = mapXY(i, curveUser, minV, maxV);
+      if(i===0) ctx.moveTo(x,y);
+      else ctx.lineTo(x,y);
+    }
+    ctx.stroke();
+
+    // projection (grey dashed) only after stop
+    if(stopped && monthIndex < TOTAL_MONTHS){
+      ctx.save();
+      ctx.setLineDash([8,8]);
+      ctx.lineWidth = 2.6;
+      ctx.strokeStyle = getCss("--proj", "rgba(232,238,252,.55)");
+      ctx.beginPath();
+      const start = Math.max(0, monthIndex-1);
+      for(let i=start;i<TOTAL_MONTHS;i++){
+        if(curveFull[i]==null) continue;
+        const [x,y] = mapXY(i, curveFull, minV, maxV);
+        if(i===start) ctx.moveTo(x,y);
+        else ctx.lineTo(x,y);
+      }
+      ctx.stroke();
+      ctx.restore();
+    }
+
+    drawFooter();
+    drawFinalNoteInCanvas();
+  }
+
+  // ---------------- LEADERBOARD ----------------
+  function loadLB(){
+    try{
+      const raw = localStorage.getItem(LB_KEY);
+      const list = raw ? JSON.parse(raw) : [];
+      return Array.isArray(list) ? list : [];
+    } catch { return []; }
+  }
+
+  function saveLB(list){
+    localStorage.setItem(LB_KEY, JSON.stringify(list.slice(0, LB_MAX)));
+  }
+
+  function renderLB(){
+    const list = loadLB();
+    lbList.innerHTML = "";
+    if(list.length===0){
+      const div = document.createElement("div");
+      div.className = "item";
+      div.textContent = "No scores yet. Sing the chorus to create your wave.";
+      lbList.appendChild(div);
+      return;
+    }
+
+    list.forEach((x, idx)=>{
+      const row = document.createElement("div");
+      row.className = "item";
+
+      const left = document.createElement("div");
+      left.style.display="flex";
+      left.style.flexDirection="column";
+      left.style.gap="2px";
+
+      const top = document.createElement("div");
+      top.style.display="flex";
+      top.style.gap="8px";
+      top.style.alignItems="center";
+
+      const badge = document.createElement("span");
+      badge.className = "badge";
+      badge.textContent = `#${idx+1}`;
+
+      const meta = document.createElement("span");
+      meta.textContent = `${x.months} months • ${x.lang.toUpperCase()} • ₹${Number(x.sip).toLocaleString("en-IN")}/mo`;
+
+      top.appendChild(badge);
+      top.appendChild(meta);
+
+      const sub = document.createElement("div");
+      sub.style.fontSize="12px";
+      sub.textContent = new Date(x.ts).toLocaleString();
+
+      left.appendChild(top);
+      left.appendChild(sub);
+
+      const score = document.createElement("div");
+      score.className = "score";
+      score.textContent = `${x.score}`;
+
+      row.appendChild(left);
+      row.appendChild(score);
+
+      lbList.appendChild(row);
+    });
+  }
+
+  function pushScore(score){
+    const sip = Math.max(500, +sipEl.value || 5000);
+    const lang = langSel.value || "en";
+    const list = loadLB();
+    list.push({ score, months: monthIndex, sip, lang, ts: Date.now() });
+    list.sort((a,b)=>b.score - a.score);
+    saveLB(list);
+    renderLB();
+  }
+
+  // ---------------- SHARE ----------------
+  function downloadPNG(){
+    const a = document.createElement("a");
+    a.download = `SIP-Song-Wave-${TOTAL_MONTHS}M.png`;
+    a.href = canvas.toDataURL("image/png");
+    a.click();
+  }
+
+  async function shareWave(){
+    try{
+      const dataUrl = canvas.toDataURL("image/png");
+      const res = await fetch(dataUrl);
+      const blob = await res.blob();
+      const file = new File([blob], `SIP-Song-Wave-${TOTAL_MONTHS}M.png`, { type:"image/png" });
+
+      if(navigator.canShare && navigator.canShare({ files:[file] })){
+        await navigator.share({
+          title:"My SIP Song Wave",
+          text:"My 60-month SIP wave (illustrative).",
+          files:[file]
+        });
+      } else {
+        downloadPNG();
+      }
+    } catch {
+      downloadPNG();
+    }
+  }
+
+  // ---------------- MIC LOOP ----------------
+  async function startMic(){
+    try{
+      stream = await navigator.mediaDevices.getUserMedia({ audio:true });
+      audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      analyser = audioCtx.createAnalyser();
+      analyser.fftSize = 2048;
+
+      source = audioCtx.createMediaStreamSource(stream);
+      source.connect(analyser);
+
+      micReady = true;
+      btnMic.disabled = true;
+      btnStop.disabled = false;
+      holdBtn.disabled = false;
+      btnReset.disabled = false;
+
+      setStatus("ok", "Mic ready. Hold and sing the chorus.", false);
+
+      const data = new Uint8Array(analyser.fftSize);
+
+      const loop = () => {
+        analyser.getByteTimeDomainData(data);
+
+        // RMS loudness
+        let sumSq = 0;
+        for(let i=0;i<data.length;i++){
+          const v = (data[i]-128)/128;
+          sumSq += v*v;
+        }
+        const rms = Math.sqrt(sumSq / data.length);
+
+        loudSmoothed = 0.92*loudSmoothed + 0.08*rms;
+        loudEl.value = loudSmoothed.toFixed(3);
+
+        const nowTs = performance.now();
+        const dt = nowTs - lastFrameTs;
+        lastFrameTs = nowTs;
+
+        if(!stopped){
+          if(holding){
+            // VAD
+            if(!isSpeaking && loudSmoothed > SPEECH_ON){
+              isSpeaking = true;
+              silenceMs = 0;
+              setStatus("ok", "Singing… release to stop.", false);
+            }
+
+            if(isSpeaking){
+              if(loudSmoothed < SPEECH_OFF){
+                silenceMs += dt;
+                if(silenceMs > STOP_AFTER_MS){
+                  holding = false;
+                  isSpeaking = false;
+                  silenceMs = 0;
+                  finalize();
+                }
+              } else {
+                silenceMs = 0;
+              }
+            }
+
+            // stats for scoring while holding
+            speakingSamples++;
+            const x = loudSmoothed;
+            const delta = x - loudMean;
+            loudMean += delta / speakingSamples;
+            loudM2 += delta * (x - loudMean);
+
+            // advance months while holding
+            if(monthIndex < TOTAL_MONTHS){
+              elapsedSpeakMs += dt;
+              while(elapsedSpeakMs >= MS_PER_MONTH && monthIndex < TOTAL_MONTHS){
+                elapsedSpeakMs -= MS_PER_MONTH;
+                generateNextMonth(loudSmoothed);
+                syncKaraokeToMonths();
+              }
+            } else {
+              holding = false;
+              finalize();
+            }
+          } else {
+            if(isSpeaking) isSpeaking = false;
+          }
+
+          buildCurvesUser();
+          draw();
+        }
+
+        rafId = requestAnimationFrame(loop);
+      };
+
+      rafId = requestAnimationFrame(loop);
+    } catch {
+      setStatus("warn", "Mic permission blocked. Please allow microphone.", false);
+    }
+  }
+
+  function stopMic(){
+    if(rafId) cancelAnimationFrame(rafId);
+    rafId = null;
+
+    if(stream) stream.getTracks().forEach(t=>t.stop());
+    if(audioCtx) audioCtx.close();
+
+    micReady = false;
+    btnMic.disabled = false;
+    btnStop.disabled = true;
+    holdBtn.disabled = true;
+
+    holding = false;
+    isSpeaking = false;
+
+    setStatus("", "Mic off.", false);
+  }
+
+  function finalize(){
+    if(monthIndex === 0){
+      setStatus("warn", "No voice captured. Try again and sing louder.", false);
+      return;
+    }
+
+    stopped = true;
+    holdBtn.disabled = true;
+
+    generateProjection();
+    updateNumbers();
+
+    const { score } = scoreFromStats();
+    scorePill.textContent = `Score: ${score}`;
+    btnShare.disabled = false;
+
+    pushScore(score);
+
+    setStatus("ok", `Result ready. Score ${score}. Share it.`, false);
+
+    karaokeProgress = 1;
+    updateKaraokeUI();
+
+    draw();
+  }
+
+  // ---------------- HOLD EVENTS ----------------
+  function onHoldStart(){
+    if(!micReady) return;
+    if(stopped){
+      setStatus("warn", "Press Reset to sing again.", false);
+      return;
+    }
+    holding = true;
+    isSpeaking = false;
+    silenceMs = 0;
+    setStatus("ok", "Hold… sing the chorus.", false);
+  }
+
+  function onHoldEnd(){
+    if(!micReady) return;
+    if(stopped) return;
+
+    holding = false;
+    if(monthIndex > 0){
+      finalize();
+    } else {
+      setStatus("warn", "No voice captured. Hold and sing louder.", false);
+    }
+  }
+
+  holdBtn.addEventListener("pointerdown", (e)=>{ e.preventDefault(); onHoldStart(); });
+  holdBtn.addEventListener("pointerup", (e)=>{ e.preventDefault(); onHoldEnd(); });
+  holdBtn.addEventListener("pointercancel", (e)=>{ e.preventDefault(); onHoldEnd(); });
+  holdBtn.addEventListener("contextmenu", (e)=>e.preventDefault());
+
+  // ---------------- UI EVENTS ----------------
+  btnMic.addEventListener("click", startMic);
+  btnStop.addEventListener("click", stopMic);
+
+  btnReset.addEventListener("click", ()=>{
+    if(!micReady){
+      setStatus("warn", "Start Mic first.", false);
+      return;
+    }
+    stopped = false;
+    holdBtn.disabled = false;
+    resetAll();
+    setStatus("ok", "Reset done. Hold and sing again.", false);
+  });
+
+  btnShare.addEventListener("click", shareWave);
+
+  sipEl.addEventListener("change", ()=>{
+    updateNumbers();
+    if(stopped) draw();
+  });
+
+  btnClear.addEventListener("click", ()=>{
+    localStorage.removeItem(LB_KEY);
+    renderLB();
+    setStatus("ok", "Leaderboard cleared (this device).", false);
+  });
+
+  langSel.addEventListener("change", ()=>{
+    renderKaraoke(langSel.value);
+    setStatus("ok", "Language changed. Hold and sing the chorus.", false);
+  });
+
+  // ---------------- BOOT ----------------
+  function init(){
+    renderLB();
+    renderKaraoke(langSel.value);
+    resetAll();
+    draw();
+  }
+  init();
+})();
+</script>
+</body>
+</html>
